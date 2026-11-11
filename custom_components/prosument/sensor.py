@@ -54,6 +54,10 @@ def _bill_attrs(d: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _hour_attrs(d: dict[str, Any]) -> dict[str, Any]:
+    return d["hour"]
+
+
 def _forecast_attrs(d: dict[str, Any]) -> dict[str, Any]:
     return d["forecast"]
 
@@ -118,6 +122,15 @@ SENSORS: tuple[ProsumentSensorDescription, ...] = (
     ),
     _storage("next_expiry_kwh", "Energia wygasająca najbliżej", "mdi:timer-sand"),
     _storage("expired_kwh", "Energia wygasła od rozliczenia", "mdi:delete-clock"),
+    ProsumentSensorDescription(
+        key="hour_balance",
+        name="Saldo bieżącej godziny",
+        icon="mdi:clock-fast",
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        state_class=SensorStateClass.MEASUREMENT,
+        suggested_display_precision=2,
+        attrs=_hour_attrs,
+    ),
     ProsumentSensorDescription(
         key="forecast_date",
         name="Prognoza – energii wystarczy do",
@@ -204,7 +217,7 @@ class ProsumentSensor(CoordinatorEntity[ProsumentCoordinator], SensorEntity):
         value = self.coordinator.data.get(self.entity_description.key)
         if value is None or isinstance(value, date):
             return value
-        return round(value, 2)
+        return round(value, 3)
 
     @property
     def extra_state_attributes(self) -> dict[str, Any] | None:

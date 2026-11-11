@@ -10,7 +10,8 @@ from homeassistant.components.recorder import get_instance
 from homeassistant.components.recorder.statistics import statistics_during_period
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import UnitOfEnergy
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers.debounce import Debouncer
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from homeassistant.util import dt as dt_util
 
@@ -36,6 +37,7 @@ from .const import (
     DEFAULT_FORECAST_DAYS,
     DEFAULT_PRICE,
     DOMAIN,
+    LIVE_COOLDOWN_SECONDS,
     MIN_FORECAST_HOURS,
     S_EXPORT,
     S_EXTRA_EXPORT,
@@ -46,6 +48,7 @@ from .const import (
     S_TO,
     UPDATE_MINUTES,
 )
+from .live import LiveHour
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -84,6 +87,48 @@ class ProsumentCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             update_interval=timedelta(minutes=UPDATE_MINUTES),
         )
         self.entry = entry
+        # Szeregi godzinowe pobrane z rejestratora przy ostatnim odświeżeniu.
+        self._cache: dict[str, Series | None] | None = None
+        conf = self.conf
+        self.live = LiveHour(
+            hass, conf[CONF_IMPORT], conf[CONF_EXPORT], self._live_changed
+        )
+        self._debouncer = Debouncer(
+            hass,
+            _LOGGER,
+            cooldown=LIVE_COOLDOWN_SECONDS,
+            immediate=True,
+            function=self._publish_live,
+        )
+
+    async def async_start_live(self) -> None:
+        await self.live.async_start()
+
+    @callback
+    def async_stop_live(self) -> None:
+        self.live.async_stop()
+        self._debouncer.async_shutdown()
+
+    @callback
+    def _live_changed(self) -> None:
+        """Licznik się zmienił: przelicz, ale nie częściej niż co kilka sekund."""
+        self._debouncer.async_schedule_call()
+
+    @callback
+    def _publish_live(self) -> None:
+        """Przelicz sensory z danych w pamięci, bez pytania rejestratora.
+
+        Celowo bez async_set_updated_data: ono przesuwa termin kolejnego
+        odświeżenia statystyk, więc przy częstych zmianach nigdy by nie nastąpiło.
+        """
+        if self._cache is None:
+            return
+        try:
+            self.data = self._compute()
+        except Exception:  # noqa: BLE001 - błąd na żywo nie może zatrzymać integracji
+            _LOGGER.exception("Błąd przeliczania danych na żywo")
+            return
+        self.async_update_listeners()
 
     @property
     def conf(self) -> dict[str, Any]:
@@ -130,22 +175,81 @@ class ProsumentCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             settlement.get(S_EXTRA_EXPORT) or 0.0,
         )
 
-    async def _async_update_data(self) -> dict[str, Any]:
+    def _plan(self) -> dict[str, Any]:
+        """Rachunki i granice okresów wynikające z konfiguracji."""
         conf = self.conf
-        factor: float = conf.get(CONF_FACTOR, DEFAULT_FACTOR)
-        price: float = conf.get(CONF_PRICE, DEFAULT_PRICE)
-        months = int(conf.get(CONF_EXPIRY_MONTHS, DEFAULT_EXPIRY_MONTHS))
         settlements = sorted(conf.get(CONF_SETTLEMENTS, []), key=lambda s: s[S_TO])
         pairs = [(date.fromisoformat(s[S_TO]), s[S_STORAGE]) for s in settlements]
         last = settlements[-1]
         prev = settlements[-2] if len(settlements) > 1 else None
         last_to = pairs[-1][0]
+        if last.get(S_FROM):
+            check_from: date | None = date.fromisoformat(last[S_FROM])
+        elif prev:
+            check_from = pairs[-2][0] + timedelta(days=1)
+        else:
+            check_from = None
+        return {
+            "pairs": pairs,
+            "last": last,
+            "prev": prev,
+            "last_to": last_to,
+            "start": _day_start(last_to + timedelta(days=1)),
+            "check_from": check_from,
+            "window_days": int(conf.get(CONF_FORECAST_DAYS, DEFAULT_FORECAST_DAYS)),
+        }
+
+    async def _async_update_data(self) -> dict[str, Any]:
+        """Pobierz szeregi godzinowe z rejestratora i przelicz sensory."""
+        plan = self._plan()
+        window_start = dt_util.utcnow().replace(
+            minute=0, second=0, microsecond=0
+        ) - timedelta(days=plan["window_days"])
+        cache: dict[str, Series | None] = {
+            "cur": await self._series(plan["start"], None),
+            "win": await self._series(window_start, None),
+            "chk": None,
+        }
+        if plan["check_from"] is not None:
+            cache["chk"] = await self._series(
+                _day_start(plan["check_from"]), plan["start"]
+            )
+        self._cache = cache
+        cur = cache["cur"]
+        assert cur is not None
+        self.live.prune(set(cur[0]) | set(cur[1]))
+        return self._compute()
+
+    def _compute(self) -> dict[str, Any]:
+        """Policz wszystkie wartości z szeregów w pamięci i bieżącej godziny."""
+        assert self._cache is not None
+        conf = self.conf
+        plan = self._plan()
+        factor: float = conf.get(CONF_FACTOR, DEFAULT_FACTOR)
+        price: float = conf.get(CONF_PRICE, DEFAULT_PRICE)
+        months = int(conf.get(CONF_EXPIRY_MONTHS, DEFAULT_EXPIRY_MONTHS))
+        pairs = plan["pairs"]
+        last = plan["last"]
+        prev = plan["prev"]
+        last_to = plan["last_to"]
+        start = plan["start"]
 
         # --- Okres bieżący: od dnia po ostatnim rozliczeniu do teraz ---
-        start = _day_start(last_to + timedelta(days=1))
+        cached = self._cache["cur"]
+        assert cached is not None
+        cur_imp, cur_exp = dict(cached[0]), dict(cached[1])
+        # Godziny, których statystyk jeszcze nie ma: bieżąca i świeżo zamknięte.
+        for hour_ts, imported, exported in self.live.hours():
+            if (
+                hour_ts >= start.timestamp()
+                and hour_ts not in cur_imp
+                and hour_ts not in cur_exp
+            ):
+                cur_imp[hour_ts] = imported
+                cur_exp[hour_ts] = exported
         res = self._simulate(
             derive_batches(pairs, months),
-            await self._series(start, None),
+            (cur_imp, cur_exp),
             dt_util.utcnow(),
             last,
         )
@@ -180,16 +284,29 @@ class ProsumentCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "diff_export": None,
             "diff_storage": None,
             "check": {},
+            "hour_balance": None,
+            "hour": {},
         }
 
+        # --- Bieżąca godzina na żywo ---
+        live_hour = self.live.current()
+        if live_hour is not None:
+            hour_ts, imported, exported = live_hour
+            data["hour_balance"] = exported - imported
+            data["hour"] = {
+                "godzina_od": dt_util.as_local(
+                    dt_util.utc_from_timestamp(hour_ts)
+                ).isoformat(),
+                "pobrane_w_tej_godzinie": round(imported, 3),
+                "oddane_w_tej_godzinie": round(exported, 3),
+                "niepelna_godzina": self.live.partial,
+            }
+
         # --- Prognoza: średni ubytek magazynu z ostatnich dni ---
-        window_days = int(conf.get(CONF_FORECAST_DAYS, DEFAULT_FORECAST_DAYS))
-        now = dt_util.utcnow()
-        window_start = now.replace(minute=0, second=0, microsecond=0) - timedelta(
-            days=window_days
-        )
-        win_imp, win_exp = await self._series(window_start, None)
-        win = balance(win_imp, win_exp, conf.get(CONF_HOURLY, True))
+        window_days = plan["window_days"]
+        window = self._cache["win"]
+        assert window is not None
+        win = balance(window[0], window[1], conf.get(CONF_HOURLY, True))
         forecast: dict[str, Any] = {
             "okno_dni": window_days,
             "godzin_w_oknie": win.hours,
@@ -222,19 +339,13 @@ class ProsumentCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             forecast["trend"] = "za mało danych"
 
         # --- Kontrola ostatniego rachunku: rachunek kontra licznik ---
-        if last.get(S_FROM):
-            check_from: date | None = date.fromisoformat(last[S_FROM])
-        elif prev:
-            check_from = pairs[-2][0] + timedelta(days=1)
-        else:
-            check_from = None
-
-        if check_from is not None:
-            check_end = _day_start(last_to + timedelta(days=1))
+        check_from = plan["check_from"]
+        check_series = self._cache["chk"]
+        if check_from is not None and check_series is not None:
             sim = self._simulate(
                 derive_batches(pairs[:-1], months),
-                await self._series(_day_start(check_from), check_end),
-                check_end,
+                check_series,
+                start,
                 prev,
             )
             chk = sim.totals

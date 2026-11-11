@@ -26,6 +26,7 @@ energy sensors. The UI is available in Polish and English.*
 - [Sensory](#sensory)
 - [Jak to jest liczone](#jak-to-jest-liczone)
 - [Wygasanie energii](#wygasanie-energii)
+- [Saldo bieżącej godziny](#saldo-bieżącej-godziny)
 - [Prognoza](#prognoza)
 - [Porównanie rachunku z licznikiem](#porównanie-rachunku-z-licznikiem)
 - [Przykładowa karta](#przykładowa-karta)
@@ -37,6 +38,7 @@ energy sensors. The UI is available in Polish and English.*
 - Liczy stan magazynu: energia z rachunku + oddana × współczynnik − pobrana.
 - Uwzględnia bilansowanie godzinowe, tak jak rozlicza operator.
 - Pilnuje terminu ważności energii (domyślnie 12 miesięcy) i pokazuje, co i kiedy przepadnie.
+- Pokazuje na żywo saldo bieżącej godziny, żeby zużyć nadwyżkę, zanim trafi do magazynu ze stratą.
 - Prognozuje, do kiedy wystarczy energii w magazynie.
 - Szacuje koszt energii pobranej ponad magazyn.
 - Porównuje rachunek z danymi z Twojego licznika.
@@ -174,6 +176,12 @@ Wszystkie sensory należą do jednego urządzenia „Prosument”.
 Sensor „Magazyn – energia pozostała” ma w atrybutach datę startu liczenia, stan z rachunku,
 współczynnik, cenę oraz listę partii energii z datami ważności.
 
+### Bieżąca godzina
+
+| Sensor | Znaczenie |
+|---|---|
+| Saldo bieżącej godziny | Oddanie minus pobór od początku godziny. Dodatnie to nadwyżka do wykorzystania, ujemne to pobór netto. |
+
 ### Prognoza
 
 | Sensor | Znaczenie |
@@ -225,8 +233,8 @@ współczynnik, cenę oraz listę partii energii z datami ważności.
 Przykład: na rachunku zostało 800 kWh, od tego czasu oddałeś 500 kWh i pobrałeś 1000 kWh.
 `800 + 500 × 0,8 − 1000 = 200 kWh` zostaje w magazynie.
 
-Dane odświeżają się co 10 minut. Home Assistant zapisuje statystyki po zamknięciu każdej
-godziny, więc bieżąca godzina pojawia się z opóźnieniem do około godziny.
+Zamknięte godziny integracja czyta ze statystyk Home Assistanta (co 10 minut), a bieżącą
+godzinę dolicza na żywo ze stanów liczników, więc sensory nadążają za miernikiem.
 
 ## Wygasanie energii
 
@@ -246,6 +254,48 @@ pobrałeś netto 100 kWh. Z pierwszej partii przepada 200 kWh, a w magazynie zos
 
 Przy jednym wpisanym rachunku cały magazyn jest jedną partią. Jeśli część energii pochodzi
 z wcześniejszego okresu, wpisz także poprzedni rachunek, a podział wyliczy się sam.
+
+## Saldo bieżącej godziny
+
+W systemie opustów energia zużyta w tej samej godzinie, w której ją oddałeś, bilansuje się 1:1.
+Ta, która trafi do magazynu, wraca tylko w 80% lub 70%. Opłaca się więc zużyć nadwyżkę,
+zanim godzina się skończy.
+
+Sensor „Saldo bieżącej godziny” pokazuje na żywo oddanie minus pobór od początku godziny
+zegarowej i zeruje się o pełnej godzinie:
+
+- wartość dodatnia: masz nadwyżkę, którą możesz jeszcze zużyć bez straty,
+- wartość ujemna: w tej godzinie pobierasz więcej, niż oddajesz.
+
+W atrybutach są pobór i oddanie w tej godzinie. Atrybut `niepelna_godzina` ma wartość `true`,
+gdy integracja nie zna stanu licznika z początku godziny (np. po restarcie Home Assistanta
+tuż po pełnej godzinie) i liczy od chwili startu.
+
+Przykład automatyzacji, która włącza grzałkę przy nadwyżce i wyłącza ją, gdy nadwyżka się kończy:
+
+```yaml
+automation:
+  - alias: Grzałka przy nadwyżce w godzinie
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.prosument_saldo_biezacej_godziny
+        above: 0.3
+    action:
+      - service: switch.turn_on
+        target:
+          entity_id: switch.grzalka
+  - alias: Grzałka stop, gdy nadwyżka zużyta
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.prosument_saldo_biezacej_godziny
+        below: 0.05
+    action:
+      - service: switch.turn_off
+        target:
+          entity_id: switch.grzalka
+```
+
+Dokładność zależy od tego, jak często Twój miernik odświeża liczniki energii.
 
 ## Prognoza
 
