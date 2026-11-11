@@ -1,0 +1,98 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Prosumer – settings",
+        "description": "Pick two energy counters from any meter at the grid connection point and enter the settlement parameters.",
+        "data": {
+          "import_entity": "Energy imported from grid",
+          "export_entity": "Energy exported to grid",
+          "factor": "Recovery factor",
+          "price": "Gross price per kWh",
+          "hourly_balancing": "Hourly balancing",
+          "expiry_months": "Stored energy validity"
+        },
+        "data_description": {
+          "factor": "0.8 up to 10 kWp, 0.7 above 10 kWp.",
+          "price": "Energy plus variable distribution fees. Used only for the cost estimate.",
+          "hourly_balancing": "Only the net of import and export counts in each hour.",
+          "expiry_months": "Months after the settlement period end when unused energy is lost. 0 disables expiry.",
+          "import_entity": "Cumulative counter of energy imported from the grid (kWh or Wh).",
+          "export_entity": "Cumulative counter of energy exported to the grid (kWh or Wh)."
+        }
+      },
+      "settlement": {
+        "title": "Last bill",
+        "description": "Copy the figures from your last settlement. Without a bill, enter yesterday's date and storage 0.",
+        "data": {
+          "period_from": "Settlement period start",
+          "period_to": "Settlement period end",
+          "storage": "Energy left to use",
+          "billed_import": "Imported energy per bill",
+          "billed_export": "Exported energy per bill"
+        },
+        "data_description": {
+          "period_from": "Optional. Needed to compare the bill with the meter.",
+          "period_to": "Last day of the billed period. Counting starts the next day.",
+          "storage": "kWh available in later periods, after applying the factor."
+        }
+      }
+    },
+    "error": {
+      "dates": "Period start cannot be after its end.",
+      "same_entity": "Import and export must be different entities.",
+      "no_statistics": "The selected entity is not a cumulative counter (state_class total or total_increasing is missing), so Home Assistant keeps no statistics for it."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Prosumer",
+        "menu_options": {
+          "add_settlement": "Enter a new bill",
+          "settings": "Settings",
+          "remove_last": "Remove the last bill"
+        }
+      },
+      "add_settlement": {
+        "title": "New bill",
+        "description": "Copy the figures from the settlement. A bill with the same period end replaces the earlier one.",
+        "data": {
+          "period_from": "Settlement period start",
+          "period_to": "Settlement period end",
+          "storage": "Energy left to use",
+          "billed_import": "Imported energy per bill",
+          "billed_export": "Exported energy per bill"
+        }
+      },
+      "settings": {
+        "title": "Settings",
+        "data": {
+          "import_entity": "Energy imported from grid",
+          "export_entity": "Energy exported to grid",
+          "factor": "Recovery factor",
+          "price": "Gross price per kWh",
+          "hourly_balancing": "Hourly balancing",
+          "expiry_months": "Stored energy validity"
+        },
+        "data_description": {
+          "expiry_months": "Months after the settlement period end when unused energy is lost. 0 disables expiry.",
+          "import_entity": "Cumulative counter of energy imported from the grid (kWh or Wh).",
+          "export_entity": "Cumulative counter of energy exported to the grid (kWh or Wh)."
+        }
+      },
+      "remove_last": {
+        "title": "Remove the last bill",
+        "description": "Remove the bill for the period ending {date} (storage {storage} kWh)? Calculations fall back to the previous bill."
+      }
+    },
+    "error": {
+      "dates": "Period start cannot be after its end.",
+      "same_entity": "Import and export must be different entities.",
+      "no_statistics": "The selected entity is not a cumulative counter (state_class total or total_increasing is missing), so Home Assistant keeps no statistics for it."
+    },
+    "abort": {
+      "only_one_settlement": "Only one bill is stored. Enter a new one with the same period end instead of removing it."
+    }
+  }
+}
