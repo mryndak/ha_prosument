@@ -368,11 +368,30 @@ entities:
 
 Projekt nie jest powiązany z żadnym sprzedawcą ani operatorem energii. Wiążące są dane z rachunku.
 
-## Rozwój
+## Rozwój i testy
+
+Testy uruchamiają integrację na prawdziwym Home Assistancie z rejestratorem i sprawdzają:
+formularze konfiguracji i menu „Konfiguruj”, wyliczenia magazynu ze statystyk, bilansowanie
+godzinowe, wygasanie, prognozę, kontrolę rachunku, saldo bieżącej godziny na żywo
+(w tym przełom godziny, restart, niedostępny miernik i wyzerowanie licznika) oraz wyładowanie
+i ponowne załadowanie integracji. Każdy test pada, jeśli integracja zapisze błąd w logu.
+
+Na Linuksie i macOS:
 
 ```
-python tests/test_calc.py
+pip install -r requirements_test.txt
+python -m pytest
 ```
+
+Na Windows (Home Assistant nie działa natywnie) przez Dockera:
+
+```
+docker build -t prosument-tests -f tests/Dockerfile .
+docker run --rm -v "%cd%:/src:ro" prosument-tests
+```
+
+Te same testy uruchamiają się automatycznie na GitHubie przy każdej zmianie, razem
+z walidacją HACS i hassfest. Nowa wersja jest wydawana dopiero, gdy wszystko przejdzie.
 
 ## Licencja
 
