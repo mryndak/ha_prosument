@@ -27,12 +27,14 @@ from .const import (
     CONF_EXPIRY_MONTHS,
     CONF_EXPORT,
     CONF_FACTOR,
+    CONF_FORECAST_DAYS,
     CONF_HOURLY,
     CONF_IMPORT,
     CONF_PRICE,
     CONF_SETTLEMENTS,
     DEFAULT_EXPIRY_MONTHS,
     DEFAULT_FACTOR,
+    DEFAULT_FORECAST_DAYS,
     DEFAULT_PRICE,
     DOMAIN,
     MAX_SETTLEMENTS,
@@ -99,6 +101,18 @@ def _settings_schema(defaults: dict[str, Any]) -> vol.Schema:
                     step=1,
                     mode=NumberSelectorMode.BOX,
                     unit_of_measurement="mies.",
+                )
+            ),
+            vol.Required(
+                CONF_FORECAST_DAYS,
+                default=defaults.get(CONF_FORECAST_DAYS, DEFAULT_FORECAST_DAYS),
+            ): NumberSelector(
+                NumberSelectorConfig(
+                    min=1,
+                    max=90,
+                    step=1,
+                    mode=NumberSelectorMode.BOX,
+                    unit_of_measurement="dni",
                 )
             ),
             vol.Required(

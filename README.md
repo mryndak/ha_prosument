@@ -26,6 +26,7 @@ energy sensors. The UI is available in Polish and English.*
 - [Sensory](#sensory)
 - [Jak to jest liczone](#jak-to-jest-liczone)
 - [Wygasanie energii](#wygasanie-energii)
+- [Prognoza](#prognoza)
 - [Porównanie rachunku z licznikiem](#porównanie-rachunku-z-licznikiem)
 - [Przykładowa karta](#przykładowa-karta)
 - [Rozwiązywanie problemów](#rozwiązywanie-problemów)
@@ -36,6 +37,7 @@ energy sensors. The UI is available in Polish and English.*
 - Liczy stan magazynu: energia z rachunku + oddana × współczynnik − pobrana.
 - Uwzględnia bilansowanie godzinowe, tak jak rozlicza operator.
 - Pilnuje terminu ważności energii (domyślnie 12 miesięcy) i pokazuje, co i kiedy przepadnie.
+- Prognozuje, do kiedy wystarczy energii w magazynie.
 - Szacuje koszt energii pobranej ponad magazyn.
 - Porównuje rachunek z danymi z Twojego licznika.
 - Działa wstecz: rachunek przychodzi po czasie, a integracja i tak policzy wszystko od końca
@@ -100,6 +102,7 @@ Trzy rzeczy, na które warto uważać:
 | Współczynnik odzysku | 0,8 dla instalacji do 10 kWp, 0,7 powyżej. | 0,8 |
 | Cena 1 kWh brutto | Energia plus opłaty zmienne dystrybucji. Tylko do szacowania kosztu. | 1,10 zł |
 | Ważność energii w magazynie | Po ilu miesiącach niewykorzystana energia przepada. 0 wyłącza wygasanie. | 12 |
+| Okno prognozy | Z ilu ostatnich dni liczyć średnie zużycie do prognozy. | 7 dni |
 | Bilansowanie godzinowe | W każdej godzinie liczy się tylko saldo poboru i oddania. | włączone |
 
 ### Krok 2: dane z ostatniego rachunku
@@ -163,12 +166,21 @@ Wszystkie sensory należą do jednego urządzenia „Prosument”.
 | Sensor | Znaczenie |
 |---|---|
 | Magazyn – energia pozostała | kWh, które możesz jeszcze pobrać bez opłaty. |
+| Magazyn z rachunku | Stan magazynu wpisany z ostatniego rachunku; w atrybutach okres rachunku. |
 | Energia do zapłaty | kWh pobrane ponad magazyn. |
 | Szacowany koszt | Energia do zapłaty × cena 1 kWh. |
 | Saldo magazynu | Wartość ze znakiem: dodatnia to zapas, ujemna to energia do zapłaty. |
 
 Sensor „Magazyn – energia pozostała” ma w atrybutach datę startu liczenia, stan z rachunku,
 współczynnik, cenę oraz listę partii energii z datami ważności.
+
+### Prognoza
+
+| Sensor | Znaczenie |
+|---|---|
+| Prognoza – energii wystarczy do | Data, do której wystarczy energii w magazynie przy obecnym zużyciu. |
+| Prognoza – dni do wyczerpania magazynu | To samo jako liczba dni. |
+| Średni dzienny ubytek magazynu | kWh na dobę; wartość ujemna oznacza, że magazyn rośnie. |
 
 ### Wygasanie
 
@@ -235,6 +247,28 @@ pobrałeś netto 100 kWh. Z pierwszej partii przepada 200 kWh, a w magazynie zos
 Przy jednym wpisanym rachunku cały magazyn jest jedną partią. Jeśli część energii pochodzi
 z wcześniejszego okresu, wpisz także poprzedni rachunek, a podział wyliczy się sam.
 
+## Prognoza
+
+Integracja bierze ostatnie 7 dni (liczbę dni zmienisz w ustawieniach) i liczy średni dzienny
+ubytek magazynu:
+
+```
+ubytek dzienny = średni pobór − średnie oddanie × współczynnik
+```
+
+Następnie sprawdza, na ile dni wystarczy obecny stan magazynu. Uwzględnia przy tym wygasanie:
+energia schodzi od najstarszej partii, a to, czego nie zdążysz zużyć przed terminem, przepada
+i skraca prognozę.
+
+Przykład: w magazynie jest 450 kWh, a przez ostatni tydzień ubywało średnio 12 kWh na dobę.
+Energii wystarczy na 37 dni.
+
+- Gdy magazyn nie maleje (oddajesz więcej, niż pobierasz), sensory prognozy mają stan
+  „nieznany”, a atrybut `trend` mówi „magazyn nie maleje”.
+- Prognoza wymaga co najmniej 24 godzin danych z miernika.
+- To prosta ekstrapolacja ostatnich dni. Nie zna pogody ani pory roku, więc jesienią
+  będzie zbyt optymistyczna, a wiosną zbyt ostrożna.
+
 ## Porównanie rachunku z licznikiem
 
 Żeby sprawdzić rachunek, wpisz go z początkiem okresu oraz energią pobraną i oddaną.
@@ -256,6 +290,7 @@ type: entities
 title: Prosument
 entities:
   - entity: sensor.prosument_magazyn_energia_pozostala
+  - entity: sensor.prosument_prognoza_energii_wystarczy_do
   - entity: sensor.prosument_energia_do_zaplaty
   - entity: sensor.prosument_szacowany_koszt
   - entity: sensor.prosument_najblizsze_wygasniecie

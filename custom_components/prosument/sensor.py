@@ -14,7 +14,7 @@ from homeassistant.components.sensor import (
     SensorStateClass,
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import UnitOfEnergy
+from homeassistant.const import UnitOfEnergy, UnitOfTime
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -44,6 +44,18 @@ def _main_attrs(d: dict[str, Any]) -> dict[str, Any]:
         "partie": d["batches"],
         "godzin_w_statystykach": d["hours"],
     }
+
+
+def _bill_attrs(d: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "okres_od": d["bill_period_from"],
+        "okres_do": d["bill_period_to"],
+        "liczone_od": d["period_start"],
+    }
+
+
+def _forecast_attrs(d: dict[str, Any]) -> dict[str, Any]:
+    return d["forecast"]
 
 
 def _check_attrs(d: dict[str, Any]) -> dict[str, Any]:
@@ -82,6 +94,12 @@ SENSORS: tuple[ProsumentSensorDescription, ...] = (
         "mdi:home-battery",
         attrs=_main_attrs,
     ),
+    _storage(
+        "start_storage",
+        "Magazyn z rachunku",
+        "mdi:file-document-outline",
+        attrs=_bill_attrs,
+    ),
     _storage("to_pay_kwh", "Energia do zapłaty", "mdi:transmission-tower-import"),
     ProsumentSensorDescription(
         key="cost",
@@ -100,6 +118,30 @@ SENSORS: tuple[ProsumentSensorDescription, ...] = (
     ),
     _storage("next_expiry_kwh", "Energia wygasająca najbliżej", "mdi:timer-sand"),
     _storage("expired_kwh", "Energia wygasła od rozliczenia", "mdi:delete-clock"),
+    ProsumentSensorDescription(
+        key="forecast_date",
+        name="Prognoza – energii wystarczy do",
+        icon="mdi:calendar-end",
+        device_class=SensorDeviceClass.DATE,
+        attrs=_forecast_attrs,
+    ),
+    ProsumentSensorDescription(
+        key="forecast_days",
+        name="Prognoza – dni do wyczerpania magazynu",
+        icon="mdi:timer-outline",
+        native_unit_of_measurement=UnitOfTime.DAYS,
+        device_class=SensorDeviceClass.DURATION,
+        state_class=SensorStateClass.MEASUREMENT,
+        suggested_display_precision=0,
+    ),
+    ProsumentSensorDescription(
+        key="daily_drain",
+        name="Średni dzienny ubytek magazynu",
+        icon="mdi:chart-line-variant",
+        native_unit_of_measurement="kWh/d",
+        state_class=SensorStateClass.MEASUREMENT,
+        suggested_display_precision=1,
+    ),
     _energy("import_balanced", "Pobrana od rozliczenia", "mdi:transmission-tower-import"),
     _energy("export_balanced", "Oddana od rozliczenia", "mdi:transmission-tower-export"),
     _energy("import_raw", "Pobrana od rozliczenia (licznik)", "mdi:counter"),

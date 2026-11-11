@@ -208,6 +208,42 @@ def test_simulate_extra_counts_before_expiry() -> None:
     assert close(r.expired, 180.0) and close(r.saldo, 0.0)
 
 
+def test_forecast_simple() -> None:
+    days, lost = calc.forecast_depletion([Batch(None, 100.0)], 10.0, date(2026, 11, 1))
+    assert close(days, 10.0) and close(lost, 0.0)
+
+
+def test_forecast_not_draining() -> None:
+    assert calc.forecast_depletion([Batch(None, 100.0)], 0.0, date(2026, 11, 1)) == (None, 0.0)
+    assert calc.forecast_depletion([Batch(None, 100.0)], -3.0, date(2026, 11, 1))[0] is None
+
+
+def test_forecast_empty_storage() -> None:
+    days, lost = calc.forecast_depletion([], 10.0, date(2026, 11, 1))
+    assert close(days, 0.0) and close(lost, 0.0)
+
+
+def test_forecast_expiry_shortens_it() -> None:
+    today = date(2026, 11, 1)
+    # partia 100 kWh ważna jeszcze 5 dni (do 5.11 włącznie): zużyjemy 50, 50 przepada
+    days, lost = calc.forecast_depletion(
+        [Batch(date(2026, 11, 5), 100.0), Batch(date(2027, 6, 30), 60.0)], 10.0, today
+    )
+    assert close(days, 11.0) and close(lost, 50.0)
+
+
+def test_forecast_batch_expiring_before_reached() -> None:
+    today = date(2026, 11, 1)
+    # pierwsza partia starcza na 10 dni, druga wygasa po 3 dniach, zanim do niej dojdziemy
+    days, lost = calc.forecast_depletion(
+        [Batch(date(2026, 11, 3), 0.0), Batch(date(2026, 12, 31), 100.0), Batch(date(2026, 11, 5), 40.0)],
+        10.0,
+        today,
+    )
+    # FIFO po dacie: partia do 5.11 idzie pierwsza (40 kWh = 4 dni), potem 100 kWh = 10 dni
+    assert close(days, 14.0) and close(lost, 0.0)
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_"):

@@ -10,6 +10,7 @@
           "factor": "Współczynnik odzysku",
           "price": "Cena 1 kWh brutto",
           "expiry_months": "Ważność energii w magazynie",
+          "forecast_days": "Okno prognozy",
           "hourly_balancing": "Bilansowanie godzinowe"
         },
         "data_description": {
@@ -18,6 +19,7 @@
           "factor": "Ile kWh możesz odebrać za każdą 1 kWh oddaną do sieci. 0,8 dla instalacji do 10 kWp, 0,7 dla większych. Wartość jest w umowie lub na rachunku.",
           "price": "Pełny koszt 1 kWh, którą musisz kupić: energia plus opłaty zmienne dystrybucji. Najprościej podzielić kwotę za energię i dystrybucję zmienną z rachunku przez liczbę kWh. Używana tylko w sensorze „Szacowany koszt”.",
           "expiry_months": "Po ilu miesiącach od końca okresu rozliczeniowego niewykorzystana energia przepada. Standardowo 12. Wpisz 0, żeby wyłączyć wygasanie.",
+          "forecast_days": "Z ilu ostatnich dni liczyć średnie dzienne zużycie do prognozy, na jak długo wystarczy energii w magazynie. Krótkie okno szybciej reaguje na zmianę pogody, długie daje spokojniejszy wynik.",
           "hourly_balancing": "Włączone: w każdej godzinie pobór i oddanie znoszą się nawzajem i liczy się tylko różnica, tak jak rozlicza operator. Wyłącz tylko wtedy, gdy wskazane liczniki są już zbilansowane godzinowo."
         }
       },
@@ -115,6 +117,7 @@
           "factor": "Współczynnik odzysku",
           "price": "Cena 1 kWh brutto",
           "expiry_months": "Ważność energii w magazynie",
+          "forecast_days": "Okno prognozy",
           "hourly_balancing": "Bilansowanie godzinowe"
         },
         "data_description": {
@@ -123,6 +126,7 @@
           "factor": "Ile kWh możesz odebrać za każdą 1 kWh oddaną do sieci. 0,8 dla instalacji do 10 kWp, 0,7 dla większych. Wartość jest w umowie lub na rachunku.",
           "price": "Pełny koszt 1 kWh, którą musisz kupić: energia plus opłaty zmienne dystrybucji. Najprościej podzielić kwotę za energię i dystrybucję zmienną z rachunku przez liczbę kWh. Używana tylko w sensorze „Szacowany koszt”.",
           "expiry_months": "Po ilu miesiącach od końca okresu rozliczeniowego niewykorzystana energia przepada. Standardowo 12. Wpisz 0, żeby wyłączyć wygasanie.",
+          "forecast_days": "Z ilu ostatnich dni liczyć średnie dzienne zużycie do prognozy, na jak długo wystarczy energii w magazynie. Krótkie okno szybciej reaguje na zmianę pogody, długie daje spokojniejszy wynik.",
           "hourly_balancing": "Włączone: w każdej godzinie pobór i oddanie znoszą się nawzajem i liczy się tylko różnica, tak jak rozlicza operator. Wyłącz tylko wtedy, gdy wskazane liczniki są już zbilansowane godzinowo."
         }
       },

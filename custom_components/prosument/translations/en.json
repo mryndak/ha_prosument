@@ -10,6 +10,7 @@
           "factor": "Recovery factor",
           "price": "Gross price per kWh",
           "expiry_months": "Stored energy validity",
+          "forecast_days": "Forecast window",
           "hourly_balancing": "Hourly balancing"
         },
         "data_description": {
@@ -18,6 +19,7 @@
           "factor": "How many kWh you can take back for each 1 kWh exported. 0.8 for installations up to 10 kWp, 0.7 for larger ones. See your contract or bill.",
           "price": "Full cost of 1 kWh you have to buy: energy plus variable distribution fees. Used only by the estimated cost sensor.",
           "expiry_months": "Months after the settlement period end when unused energy is lost. Usually 12. Enter 0 to disable expiry.",
+          "forecast_days": "How many recent days are averaged to forecast how long the stored energy will last. A short window reacts faster to weather changes, a long one is steadier.",
           "hourly_balancing": "On: within each hour import and export cancel out and only the difference counts, as the grid operator settles it. Turn off only if the selected counters are already balanced hourly."
         }
       },
@@ -115,6 +117,7 @@
           "factor": "Recovery factor",
           "price": "Gross price per kWh",
           "expiry_months": "Stored energy validity",
+          "forecast_days": "Forecast window",
           "hourly_balancing": "Hourly balancing"
         },
         "data_description": {
@@ -123,6 +126,7 @@
           "factor": "How many kWh you can take back for each 1 kWh exported. 0.8 for installations up to 10 kWp, 0.7 for larger ones. See your contract or bill.",
           "price": "Full cost of 1 kWh you have to buy: energy plus variable distribution fees. Used only by the estimated cost sensor.",
           "expiry_months": "Months after the settlement period end when unused energy is lost. Usually 12. Enter 0 to disable expiry.",
+          "forecast_days": "How many recent days are averaged to forecast how long the stored energy will last. A short window reacts faster to weather changes, a long one is steadier.",
           "hourly_balancing": "On: within each hour import and export cancel out and only the difference counts, as the grid operator settles it. Turn off only if the selected counters are already balanced hourly."
         }
       },

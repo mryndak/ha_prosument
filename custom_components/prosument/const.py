@@ -9,6 +9,7 @@ CONF_FACTOR = "factor"
 CONF_PRICE = "price"
 CONF_HOURLY = "hourly_balancing"
 CONF_EXPIRY_MONTHS = "expiry_months"
+CONF_FORECAST_DAYS = "forecast_days"
 CONF_SETTLEMENTS = "settlements"
 
 # Pola pojedynczego rozliczenia (rachunku)
@@ -23,5 +24,7 @@ S_EXTRA_EXPORT = "extra_export"
 DEFAULT_FACTOR = 0.8
 DEFAULT_PRICE = 1.10
 DEFAULT_EXPIRY_MONTHS = 12
+DEFAULT_FORECAST_DAYS = 7
+MIN_FORECAST_HOURS = 24
 MAX_SETTLEMENTS = 12
 UPDATE_MINUTES = 10

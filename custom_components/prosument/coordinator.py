@@ -14,19 +14,29 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from homeassistant.util import dt as dt_util
 
-from .calc import Batch, SimResult, derive_batches, simulate
+from .calc import (
+    Batch,
+    SimResult,
+    balance,
+    derive_batches,
+    forecast_depletion,
+    simulate,
+)
 from .const import (
     CONF_EXPIRY_MONTHS,
     CONF_EXPORT,
     CONF_FACTOR,
+    CONF_FORECAST_DAYS,
     CONF_HOURLY,
     CONF_IMPORT,
     CONF_PRICE,
     CONF_SETTLEMENTS,
     DEFAULT_EXPIRY_MONTHS,
     DEFAULT_FACTOR,
+    DEFAULT_FORECAST_DAYS,
     DEFAULT_PRICE,
     DOMAIN,
+    MIN_FORECAST_HOURS,
     S_EXPORT,
     S_EXTRA_EXPORT,
     S_EXTRA_IMPORT,
@@ -159,6 +169,8 @@ class ProsumentCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "hours": cur.hours,
             "period_start": (last_to + timedelta(days=1)).isoformat(),
             "start_storage": last[S_STORAGE],
+            "bill_period_to": last_to.isoformat(),
+            "bill_period_from": last.get(S_FROM),
             "extra_import": last.get(S_EXTRA_IMPORT) or 0.0,
             "extra_export": last.get(S_EXTRA_EXPORT) or 0.0,
             "factor": factor,
@@ -169,6 +181,45 @@ class ProsumentCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "diff_storage": None,
             "check": {},
         }
+
+        # --- Prognoza: średni ubytek magazynu z ostatnich dni ---
+        window_days = int(conf.get(CONF_FORECAST_DAYS, DEFAULT_FORECAST_DAYS))
+        now = dt_util.utcnow()
+        window_start = now.replace(minute=0, second=0, microsecond=0) - timedelta(
+            days=window_days
+        )
+        win_imp, win_exp = await self._series(window_start, None)
+        win = balance(win_imp, win_exp, conf.get(CONF_HOURLY, True))
+        forecast: dict[str, Any] = {
+            "okno_dni": window_days,
+            "godzin_w_oknie": win.hours,
+        }
+        data.update(
+            {
+                "daily_drain": None,
+                "forecast_days": None,
+                "forecast_date": None,
+                "forecast": forecast,
+            }
+        )
+        if win.hours >= MIN_FORECAST_HOURS:
+            per_day = 24 / win.hours
+            drain = (win.import_balanced - win.export_balanced * factor) * per_day
+            data["daily_drain"] = drain
+            forecast["sredni_pobor_dzienny"] = round(win.import_balanced * per_day, 2)
+            forecast["srednie_oddanie_dzienne"] = round(
+                win.export_balanced * per_day, 2
+            )
+            days, lost = forecast_depletion(res.batches, drain, dt_util.now().date())
+            if days is None:
+                forecast["trend"] = "magazyn nie maleje"
+            else:
+                forecast["trend"] = "magazyn maleje"
+                forecast["utracone_przez_wygasniecie"] = round(lost, 2)
+                data["forecast_days"] = days
+                data["forecast_date"] = (dt_util.now() + timedelta(days=days)).date()
+        else:
+            forecast["trend"] = "za mało danych"
 
         # --- Kontrola ostatniego rachunku: rachunek kontra licznik ---
         if last.get(S_FROM):

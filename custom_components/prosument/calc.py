@@ -184,3 +184,35 @@ def simulate(
         expired=expired,
         batches=[b for b in view if b.amount > 1e-9],
     )
+
+
+def forecast_depletion(
+    batches: list[Batch], daily_drain: float, today: date
+) -> tuple[float | None, float]:
+    """Za ile dni magazyn się wyczerpie przy stałym dziennym ubytku.
+
+    daily_drain: średni ubytek magazynu w kWh na dobę (pobór − oddanie × współczynnik).
+    Zwraca (liczba dni albo None, kWh utracone po drodze przez wygaśnięcie).
+    None oznacza, że magazyn nie maleje. Partie schodzą od najstarszej;
+    partia jest ważna do końca dnia `expiry`.
+    """
+    if daily_drain <= 0:
+        return None, 0.0
+    days = 0.0
+    lost = 0.0
+    for batch in _sorted(batches):
+        if batch.amount <= 0:
+            continue
+        need = batch.amount / daily_drain
+        if batch.expiry is None:
+            days += need
+            continue
+        available = (batch.expiry - today).days + 1 - days
+        if available <= 0:
+            lost += batch.amount
+        elif need <= available:
+            days += need
+        else:
+            lost += batch.amount - available * daily_drain
+            days += available
+    return days, lost
