@@ -38,11 +38,16 @@ from .const import (
     DOMAIN,
     MAX_SETTLEMENTS,
     S_EXPORT,
+    S_EXTRA_EXPORT,
+    S_EXTRA_IMPORT,
     S_FROM,
     S_IMPORT,
     S_STORAGE,
     S_TO,
 )
+
+DOCS_URL = "https://github.com/mryndak/ha_prosument#readme"
+_DOCS = {"docs_url": DOCS_URL}
 
 _ENERGY_ENTITY = EntitySelector(
     EntitySelectorConfig(domain="sensor", device_class="energy")
@@ -112,6 +117,8 @@ def _settlement_schema() -> vol.Schema:
             vol.Required(S_STORAGE, default=0): _KWH,
             vol.Optional(S_IMPORT): _KWH,
             vol.Optional(S_EXPORT): _KWH,
+            vol.Optional(S_EXTRA_IMPORT): _KWH,
+            vol.Optional(S_EXTRA_EXPORT): _KWH,
         }
     )
 
@@ -167,6 +174,7 @@ class ProsumentConfigFlow(ConfigFlow, domain=DOMAIN):
             step_id="user",
             data_schema=_settings_schema(user_input or {}),
             errors=errors,
+            description_placeholders=_DOCS,
         )
 
     async def async_step_settlement(
@@ -182,7 +190,10 @@ class ProsumentConfigFlow(ConfigFlow, domain=DOMAIN):
                     options={**self._settings, CONF_SETTLEMENTS: [user_input]},
                 )
         return self.async_show_form(
-            step_id="settlement", data_schema=_settlement_schema(), errors=errors
+            step_id="settlement",
+            data_schema=_settlement_schema(),
+            errors=errors,
+            description_placeholders=_DOCS,
         )
 
     @staticmethod
@@ -200,6 +211,7 @@ class ProsumentOptionsFlow(OptionsFlow):
         return self.async_show_menu(
             step_id="init",
             menu_options=["add_settlement", "settings", "remove_last"],
+            description_placeholders=_DOCS,
         )
 
     async def async_step_add_settlement(
@@ -218,6 +230,7 @@ class ProsumentOptionsFlow(OptionsFlow):
             step_id="add_settlement",
             data_schema=_settlement_schema(),
             errors=errors,
+            description_placeholders=_DOCS,
         )
 
     async def async_step_settings(
@@ -234,6 +247,7 @@ class ProsumentOptionsFlow(OptionsFlow):
             step_id="settings",
             data_schema=_settings_schema(user_input or dict(self.config_entry.options)),
             errors=errors,
+            description_placeholders=_DOCS,
         )
 
     async def async_step_remove_last(

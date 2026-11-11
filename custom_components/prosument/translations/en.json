@@ -2,52 +2,59 @@
   "config": {
     "step": {
       "user": {
-        "title": "Prosumer – settings",
-        "description": "Pick two energy counters from any meter at the grid connection point and enter the settlement parameters.",
+        "title": "Prosumer: settings (step 1 of 2)",
+        "description": "The integration tracks your virtual energy storage under net-metering.\n\nIn this step you pick the counters and settlement rules. In the next one you copy the figures from your last bill.\n\nEverything can be changed later in **Configure → Settings**. Details and examples: [documentation]({docs_url}).",
         "data": {
           "import_entity": "Energy imported from grid",
           "export_entity": "Energy exported to grid",
           "factor": "Recovery factor",
           "price": "Gross price per kWh",
-          "hourly_balancing": "Hourly balancing",
-          "expiry_months": "Stored energy validity"
+          "expiry_months": "Stored energy validity",
+          "hourly_balancing": "Hourly balancing"
         },
         "data_description": {
-          "factor": "0.8 up to 10 kWp, 0.7 above 10 kWp.",
-          "price": "Energy plus variable distribution fees. Used only for the cost estimate.",
-          "hourly_balancing": "Only the net of import and export counts in each hour.",
-          "expiry_months": "Months after the settlement period end when unused energy is lost. 0 disables expiry.",
-          "import_entity": "Cumulative counter of energy imported from the grid (kWh or Wh).",
-          "export_entity": "Cumulative counter of energy exported to the grid (kWh or Wh)."
+          "import_entity": "Cumulative counter (kWh or Wh) of energy imported from the grid, measured at the grid connection point. The same sensor you would use as grid consumption in the Energy dashboard.",
+          "export_entity": "Cumulative counter (kWh or Wh) of energy that actually flowed to the grid. Do not pick solar production.",
+          "factor": "How many kWh you can take back for each 1 kWh exported. 0.8 for installations up to 10 kWp, 0.7 for larger ones. See your contract or bill.",
+          "price": "Full cost of 1 kWh you have to buy: energy plus variable distribution fees. Used only by the estimated cost sensor.",
+          "expiry_months": "Months after the settlement period end when unused energy is lost. Usually 12. Enter 0 to disable expiry.",
+          "hourly_balancing": "On: within each hour import and export cancel out and only the difference counts, as the grid operator settles it. Turn off only if the selected counters are already balanced hourly."
         }
       },
       "settlement": {
-        "title": "Last bill",
-        "description": "Copy the figures from your last settlement. Without a bill, enter yesterday's date and storage 0.",
+        "title": "Bill figures (step 2 of 2)",
+        "description": "Copy the figures from your last settlement. From the day after the period end the integration adds import and export from your meter.\n\n**Only two fields are required:** period end and energy left in storage. The rest is used to compare the bill with the meter and to cover the time before the meter was running.\n\nNo bill yet? Enter yesterday's date and 0 kWh. Field help: [documentation]({docs_url}).",
         "data": {
           "period_from": "Settlement period start",
           "period_to": "Settlement period end",
-          "storage": "Energy left to use",
+          "storage": "Energy left in storage",
           "billed_import": "Imported energy per bill",
-          "billed_export": "Exported energy per bill"
+          "billed_export": "Exported energy per bill",
+          "extra_import": "Import before the meter was running",
+          "extra_export": "Export before the meter was running"
         },
         "data_description": {
-          "period_from": "Optional. Needed to compare the bill with the meter.",
-          "period_to": "Last day of the billed period. Counting starts the next day.",
-          "storage": "kWh available in later periods, after applying the factor."
+          "period_from": "Optional. First day of the billed period. Needed only for the bill difference sensors.",
+          "period_to": "Last day of the billed period, i.e. the day the operator read the meter. Not the invoice date. Counting starts at midnight the next day.",
+          "storage": "kWh you can still take for free after this settlement, already multiplied by the factor. If the bill shows the surplus before the factor, multiply it by 0.8 or 0.7.",
+          "billed_import": "Optional. Total energy imported in the billed period, after hourly balancing. Used only to compare the bill with the meter.",
+          "billed_export": "Optional. Total energy exported in the billed period, after balancing, before the factor. Used only to compare the bill with the meter.",
+          "extra_import": "Optional. Fill in only if your meter started recording in Home Assistant later than the period end. Enter the kWh imported in that gap: utility meter reading (register 1.8.0) on the day your meter started minus the reading on the bill.",
+          "extra_export": "Optional. Same for exported energy: utility meter reading (register 2.8.0) on the day your meter started minus the reading on the bill. Do not apply the factor."
         }
       }
     },
     "error": {
       "dates": "Period start cannot be after its end.",
-      "same_entity": "Import and export must be different entities.",
-      "no_statistics": "The selected entity is not a cumulative counter (state_class total or total_increasing is missing), so Home Assistant keeps no statistics for it."
+      "same_entity": "Import and export must be two different entities.",
+      "no_statistics": "This entity is not a cumulative counter (state_class total or total_increasing is missing), so Home Assistant keeps no statistics for it. Pick a sensor that can be added to the Energy dashboard."
     }
   },
   "options": {
     "step": {
       "init": {
         "title": "Prosumer",
+        "description": "**Enter a new bill**: after each settlement, e.g. every six months.\n\n**Settings**: counters, factor, price, energy validity.\n\n**Remove the last bill**: undoes the last entry.",
         "menu_options": {
           "add_settlement": "Enter a new bill",
           "settings": "Settings",
@@ -56,29 +63,44 @@
       },
       "add_settlement": {
         "title": "New bill",
-        "description": "Copy the figures from the settlement. A bill with the same period end replaces the earlier one.",
+        "description": "Copy the figures from the new settlement. After saving, counting starts the day after this period ends and the bill difference sensors compare the bill with the meter.\n\n**Only two fields are required:** period end and energy left in storage.\n\nA bill with the same period end replaces the earlier one, which is how you fix a mistake. Field help: [documentation]({docs_url}).",
         "data": {
           "period_from": "Settlement period start",
           "period_to": "Settlement period end",
-          "storage": "Energy left to use",
+          "storage": "Energy left in storage",
           "billed_import": "Imported energy per bill",
-          "billed_export": "Exported energy per bill"
+          "billed_export": "Exported energy per bill",
+          "extra_import": "Import before the meter was running",
+          "extra_export": "Export before the meter was running"
+        },
+        "data_description": {
+          "period_from": "Optional. First day of the billed period. Needed only for the bill difference sensors.",
+          "period_to": "Last day of the billed period, i.e. the day the operator read the meter. Not the invoice date. Counting starts at midnight the next day.",
+          "storage": "kWh you can still take for free after this settlement, already multiplied by the factor. If the bill shows the surplus before the factor, multiply it by 0.8 or 0.7.",
+          "billed_import": "Optional. Total energy imported in the billed period, after hourly balancing. Used only to compare the bill with the meter.",
+          "billed_export": "Optional. Total energy exported in the billed period, after balancing, before the factor. Used only to compare the bill with the meter.",
+          "extra_import": "Optional. Fill in only if your meter started recording in Home Assistant later than the period end. Enter the kWh imported in that gap: utility meter reading (register 1.8.0) on the day your meter started minus the reading on the bill.",
+          "extra_export": "Optional. Same for exported energy: utility meter reading (register 2.8.0) on the day your meter started minus the reading on the bill. Do not apply the factor."
         }
       },
       "settings": {
         "title": "Settings",
+        "description": "A change recalculates all sensors from the last bill. Stored bills stay untouched. Details: [documentation]({docs_url}).",
         "data": {
           "import_entity": "Energy imported from grid",
           "export_entity": "Energy exported to grid",
           "factor": "Recovery factor",
           "price": "Gross price per kWh",
-          "hourly_balancing": "Hourly balancing",
-          "expiry_months": "Stored energy validity"
+          "expiry_months": "Stored energy validity",
+          "hourly_balancing": "Hourly balancing"
         },
         "data_description": {
-          "expiry_months": "Months after the settlement period end when unused energy is lost. 0 disables expiry.",
-          "import_entity": "Cumulative counter of energy imported from the grid (kWh or Wh).",
-          "export_entity": "Cumulative counter of energy exported to the grid (kWh or Wh)."
+          "import_entity": "Cumulative counter (kWh or Wh) of energy imported from the grid, measured at the grid connection point. The same sensor you would use as grid consumption in the Energy dashboard.",
+          "export_entity": "Cumulative counter (kWh or Wh) of energy that actually flowed to the grid. Do not pick solar production.",
+          "factor": "How many kWh you can take back for each 1 kWh exported. 0.8 for installations up to 10 kWp, 0.7 for larger ones. See your contract or bill.",
+          "price": "Full cost of 1 kWh you have to buy: energy plus variable distribution fees. Used only by the estimated cost sensor.",
+          "expiry_months": "Months after the settlement period end when unused energy is lost. Usually 12. Enter 0 to disable expiry.",
+          "hourly_balancing": "On: within each hour import and export cancel out and only the difference counts, as the grid operator settles it. Turn off only if the selected counters are already balanced hourly."
         }
       },
       "remove_last": {
@@ -88,8 +110,8 @@
     },
     "error": {
       "dates": "Period start cannot be after its end.",
-      "same_entity": "Import and export must be different entities.",
-      "no_statistics": "The selected entity is not a cumulative counter (state_class total or total_increasing is missing), so Home Assistant keeps no statistics for it."
+      "same_entity": "Import and export must be two different entities.",
+      "no_statistics": "This entity is not a cumulative counter (state_class total or total_increasing is missing), so Home Assistant keeps no statistics for it. Pick a sensor that can be added to the Energy dashboard."
     },
     "abort": {
       "only_one_settlement": "Only one bill is stored. Enter a new one with the same period end instead of removing it."

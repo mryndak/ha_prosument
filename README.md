@@ -108,14 +108,37 @@ Trzy rzeczy, na które warto uważać:
 |---|---|---|
 | Początek okresu rozliczeniowego | Pierwszy dzień okresu z rachunku. Potrzebny do porównania rachunku z licznikiem. | nie |
 | Koniec okresu rozliczeniowego | Ostatni dzień okresu z rachunku. Liczenie startuje od następnego dnia. | tak |
-| Energia pozostała do wykorzystania | Ile kWh zostało w magazynie po rozliczeniu, **już po uwzględnieniu współczynnika**. | tak |
+| Energia pozostała w magazynie | Ile kWh zostało w magazynie po rozliczeniu, **już po uwzględnieniu współczynnika**. | tak |
 | Energia pobrana wg rachunku | Ilość za cały okres, po bilansowaniu. | nie |
 | Energia oddana wg rachunku | Ilość za cały okres, po bilansowaniu, przed współczynnikiem. | nie |
+
+| Pobór przed uruchomieniem miernika | kWh pobrane od końca okresu do dnia, od którego HA ma dane z miernika. | nie |
+| Oddanie przed uruchomieniem miernika | kWh oddane w tym samym czasie, przed współczynnikiem. | nie |
 
 Jeśli rachunek podaje pozostałą energię przed współczynnikiem (surową energię oddaną),
 przemnóż ją przez 0,8 lub 0,7 przed wpisaniem.
 
 Nie masz jeszcze rachunku? Podaj wczorajszą datę i magazyn 0. Integracja zacznie liczyć od dziś.
+
+### Miernik zamontowany po dacie rozliczenia
+
+Integracja liczy tylko te godziny, dla których Home Assistant ma statystyki miernika.
+Jeśli rozliczenie było w marcu, a miernik działa od maja, brakujące dwa miesiące
+uzupełnisz polami „Pobór / Oddanie przed uruchomieniem miernika”.
+
+Wartości policzysz ze wskazań licznika operatora (rejestry 1.8.0 – pobór, 2.8.0 – oddanie):
+
+```
+pobór przed miernikiem   = wskazanie 1.8.0 w dniu uruchomienia miernika − wskazanie 1.8.0 z rachunku
+oddanie przed miernikiem = wskazanie 2.8.0 w dniu uruchomienia miernika − wskazanie 2.8.0 z rachunku
+```
+
+Przykład: rachunek podaje 12 400 kWh poboru i 9 100 kWh oddania. W dniu montażu miernika
+licznik pokazuje 12 700 i 9 600. Wpisujesz pobór 300 kWh i oddanie 500 kWh.
+
+Korekta jest doliczana na początku okresu i dotyczy tylko tego rachunku, przy którym ją wpisano.
+Wskazania licznika nie są zbilansowane godzinowo, więc wynik jest lekko zaniżony na Twoją
+niekorzyść (o część energii, która w tych miesiącach zbilansowała się w ramach godziny).
 
 ## Wpisywanie kolejnych rachunków
 
@@ -245,7 +268,7 @@ entities:
 | Licznika nie ma na liście wyboru | Encja nie ma `device_class: energy`. Popraw integrację miernika lub dodaj klasę w dostosowaniu encji. |
 | Błąd „nie jest licznikiem narastającym” | Encja nie ma `state_class`, więc HA nie zapisuje statystyk. |
 | Magazyn się nie zmienia | Sprawdź atrybut `godzin_w_statystykach`. Zero oznacza brak statystyk od daty rozliczenia. |
-| Wartości zaczynają się później niż rachunek | Miernik został dodany do HA po końcu okresu rozliczeniowego; wcześniejszych danych nie ma. |
+| Wartości zaczynają się później niż rachunek | Miernik został dodany do HA po końcu okresu rozliczeniowego. Uzupełnij brakujący czas polami „przed uruchomieniem miernika”. |
 | Pobór i oddanie są zamienione | Zamień encje w Konfiguruj → Ustawienia. |
 | Duża różnica względem rachunku | Sprawdź miejsce montażu miernika i bilansowanie międzyfazowe (patrz wyżej). |
 

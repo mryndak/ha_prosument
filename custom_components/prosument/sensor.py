@@ -35,6 +35,8 @@ def _main_attrs(d: dict[str, Any]) -> dict[str, Any]:
     return {
         "liczone_od": d["period_start"],
         "magazyn_z_rachunku": d["start_storage"],
+        "korekta_pobrana_przed_miernikiem": d["extra_import"],
+        "korekta_oddana_przed_miernikiem": d["extra_export"],
         "wspolczynnik": d["factor"],
         "cena_za_kwh": d["price"],
         "waznosc_miesiace": d["expiry_months"],

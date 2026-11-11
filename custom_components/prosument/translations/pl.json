@@ -2,54 +2,59 @@
   "config": {
     "step": {
       "user": {
-        "title": "Prosument – ustawienia",
-        "description": "Wskaż dwa liczniki energii z dowolnego miernika w punkcie przyłączenia do sieci i podaj parametry rozliczenia.",
+        "title": "Prosument: ustawienia (krok 1 z 2)",
+        "description": "Integracja liczy stan Twojego wirtualnego magazynu energii w systemie opustów (net-metering).\n\nW tym kroku wskazujesz liczniki i zasady rozliczenia. W następnym przepiszesz liczby z ostatniego rachunku.\n\nWszystko zmienisz później w **Konfiguruj → Ustawienia**. Szczegóły i przykłady: [dokumentacja]({docs_url}).",
         "data": {
-          "import_entity": "Energia pobrana z sieci (import)",
-          "export_entity": "Energia oddana do sieci (eksport)",
+          "import_entity": "Energia pobrana z sieci",
+          "export_entity": "Energia oddana do sieci",
           "factor": "Współczynnik odzysku",
           "price": "Cena 1 kWh brutto",
-          "hourly_balancing": "Bilansowanie godzinowe",
-          "expiry_months": "Ważność energii w magazynie"
+          "expiry_months": "Ważność energii w magazynie",
+          "hourly_balancing": "Bilansowanie godzinowe"
         },
         "data_description": {
-          "import_entity": "Licznik narastający energii pobranej z sieci (kWh lub Wh). Np. w mierniku Chint DTSU-666: „Positive active total energy”.",
-          "export_entity": "Licznik narastający energii oddanej do sieci (kWh lub Wh). Np. w mierniku Chint DTSU-666: „Negative active total energy”.",
-          "factor": "0,8 dla instalacji do 10 kWp, 0,7 powyżej 10 kWp.",
-          "price": "Energia plus opłaty zmienne dystrybucji. Służy tylko do szacowania kosztu.",
-          "hourly_balancing": "W każdej godzinie liczy się saldo poboru i oddania, tak jak rozlicza operator.",
-          "expiry_months": "Liczba miesięcy od końca okresu rozliczeniowego, po której niewykorzystana energia przepada. 0 wyłącza wygasanie."
+          "import_entity": "Licznik narastający (kWh lub Wh) energii pobranej z sieci, mierzony w punkcie przyłączenia. To ten sam sensor, który w panelu Energia podaje się jako „pobór z sieci”. Przykład: w mierniku Chint DTSU-666 jest to „Positive active total energy”.",
+          "export_entity": "Licznik narastający (kWh lub Wh) energii, która faktycznie wypłynęła do sieci. Nie wybieraj produkcji paneli. Przykład: w mierniku Chint DTSU-666 jest to „Negative active total energy”.",
+          "factor": "Ile kWh możesz odebrać za każdą 1 kWh oddaną do sieci. 0,8 dla instalacji do 10 kWp, 0,7 dla większych. Wartość jest w umowie lub na rachunku.",
+          "price": "Pełny koszt 1 kWh, którą musisz kupić: energia plus opłaty zmienne dystrybucji. Najprościej podzielić kwotę za energię i dystrybucję zmienną z rachunku przez liczbę kWh. Używana tylko w sensorze „Szacowany koszt”.",
+          "expiry_months": "Po ilu miesiącach od końca okresu rozliczeniowego niewykorzystana energia przepada. Standardowo 12. Wpisz 0, żeby wyłączyć wygasanie.",
+          "hourly_balancing": "Włączone: w każdej godzinie pobór i oddanie znoszą się nawzajem i liczy się tylko różnica, tak jak rozlicza operator. Wyłącz tylko wtedy, gdy wskazane liczniki są już zbilansowane godzinowo."
         }
       },
       "settlement": {
-        "title": "Dane z ostatniego rachunku",
-        "description": "Przepisz dane z ostatniego rozliczenia. Jeśli nie masz rachunku, podaj wczorajszą datę i magazyn 0.",
+        "title": "Dane z rachunku (krok 2 z 2)",
+        "description": "Przepisz liczby z ostatniego rozliczenia. Od dnia po końcu okresu integracja sama dolicza pobór i oddanie z Twojego miernika.\n\n**Wymagane są tylko dwa pola:** koniec okresu i energia pozostała w magazynie. Pozostałe służą do porównania rachunku z miernikiem oraz do uzupełnienia czasu, gdy miernik jeszcze nie działał.\n\nNie masz rachunku? Podaj wczorajszą datę i 0 kWh. Objaśnienia pól: [dokumentacja]({docs_url}).",
         "data": {
           "period_from": "Początek okresu rozliczeniowego",
           "period_to": "Koniec okresu rozliczeniowego",
-          "storage": "Energia pozostała do wykorzystania",
+          "storage": "Energia pozostała w magazynie",
           "billed_import": "Energia pobrana wg rachunku",
-          "billed_export": "Energia oddana wg rachunku"
+          "billed_export": "Energia oddana wg rachunku",
+          "extra_import": "Pobór przed uruchomieniem miernika",
+          "extra_export": "Oddanie przed uruchomieniem miernika"
         },
         "data_description": {
-          "period_from": "Opcjonalnie. Potrzebne do porównania rachunku z licznikiem.",
-          "period_to": "Ostatni dzień okresu z rachunku. Licznik liczy od następnego dnia.",
-          "storage": "Ilość kWh do odebrania w kolejnych okresach, już po uwzględnieniu współczynnika.",
-          "billed_import": "Opcjonalnie. Ilość za cały okres, po bilansowaniu.",
-          "billed_export": "Opcjonalnie. Ilość za cały okres, po bilansowaniu, przed współczynnikiem."
+          "period_from": "Opcjonalnie. Pierwszy dzień okresu, za który wystawiono rachunek. Potrzebny tylko do sensorów „Rachunek – różnica…”.",
+          "period_to": "Ostatni dzień okresu z rachunku, czyli dzień odczytu licznika przez operatora. To nie jest data wystawienia faktury. Liczenie startuje od północy następnego dnia.",
+          "storage": "Ile kWh możesz jeszcze pobrać bez opłaty po tym rozliczeniu, czyli stan magazynu już po przemnożeniu przez współczynnik. Jeśli rachunek podaje nadwyżkę przed współczynnikiem, przemnóż ją przez 0,8 lub 0,7.",
+          "billed_import": "Opcjonalnie. Łączna energia pobrana z sieci w całym okresie rachunku, po bilansowaniu godzinowym. Służy tylko do porównania rachunku z miernikiem.",
+          "billed_export": "Opcjonalnie. Łączna energia oddana do sieci w całym okresie rachunku, po bilansowaniu, przed współczynnikiem. Służy tylko do porównania rachunku z miernikiem.",
+          "extra_import": "Opcjonalnie. Wypełnij tylko wtedy, gdy miernik zaczął działać w Home Assistant później niż koniec okresu z rachunku. Wpisz kWh pobrane w tym brakującym czasie: wskazanie licznika operatora (rejestr 1.8.0) z dnia uruchomienia miernika minus wskazanie z rachunku.",
+          "extra_export": "Opcjonalnie. Jak wyżej, dla energii oddanej: wskazanie licznika operatora (rejestr 2.8.0) z dnia uruchomienia miernika minus wskazanie z rachunku. Bez mnożenia przez współczynnik."
         }
       }
     },
     "error": {
       "dates": "Początek okresu nie może być później niż koniec.",
-      "same_entity": "Import i eksport muszą być różnymi encjami.",
-      "no_statistics": "Wybrana encja nie jest licznikiem narastającym (brak state_class total lub total_increasing), więc Home Assistant nie zapisuje dla niej statystyk."
+      "same_entity": "Pobór i oddanie muszą być dwiema różnymi encjami.",
+      "no_statistics": "Ta encja nie jest licznikiem narastającym (brak state_class total lub total_increasing), więc Home Assistant nie zapisuje dla niej statystyk. Wybierz sensor, który da się dodać do panelu Energia."
     }
   },
   "options": {
     "step": {
       "init": {
         "title": "Prosument",
+        "description": "**Wpisz nowy rachunek**: po każdym rozliczeniu, np. co pół roku.\n\n**Ustawienia**: liczniki, współczynnik, cena, ważność energii.\n\n**Usuń ostatni rachunek**: cofa ostatni wpis.",
         "menu_options": {
           "add_settlement": "Wpisz nowy rachunek",
           "settings": "Ustawienia",
@@ -58,39 +63,44 @@
       },
       "add_settlement": {
         "title": "Nowy rachunek",
-        "description": "Przepisz dane z rozliczenia. Rachunek z tą samą datą końca okresu zastąpi wcześniej wpisany.",
+        "description": "Przepisz liczby z nowego rozliczenia. Po zapisaniu integracja zacznie liczyć od dnia po końcu tego okresu, a sensory „Rachunek – różnica…” porównają rachunek z miernikiem.\n\n**Wymagane są tylko dwa pola:** koniec okresu i energia pozostała w magazynie.\n\nRachunek z tą samą datą końca okresu zastąpi wpisany wcześniej, więc tak poprawisz pomyłkę. Objaśnienia pól: [dokumentacja]({docs_url}).",
         "data": {
           "period_from": "Początek okresu rozliczeniowego",
           "period_to": "Koniec okresu rozliczeniowego",
-          "storage": "Energia pozostała do wykorzystania",
+          "storage": "Energia pozostała w magazynie",
           "billed_import": "Energia pobrana wg rachunku",
-          "billed_export": "Energia oddana wg rachunku"
+          "billed_export": "Energia oddana wg rachunku",
+          "extra_import": "Pobór przed uruchomieniem miernika",
+          "extra_export": "Oddanie przed uruchomieniem miernika"
         },
         "data_description": {
-          "period_from": "Opcjonalnie. Bez tej daty okres zaczyna się dzień po poprzednim rachunku.",
-          "period_to": "Ostatni dzień okresu z rachunku. Licznik liczy od następnego dnia.",
-          "storage": "Ilość kWh do odebrania w kolejnych okresach, już po uwzględnieniu współczynnika.",
-          "billed_import": "Opcjonalnie. Ilość za cały okres, po bilansowaniu.",
-          "billed_export": "Opcjonalnie. Ilość za cały okres, po bilansowaniu, przed współczynnikiem."
+          "period_from": "Opcjonalnie. Pierwszy dzień okresu, za który wystawiono rachunek. Potrzebny tylko do sensorów „Rachunek – różnica…”.",
+          "period_to": "Ostatni dzień okresu z rachunku, czyli dzień odczytu licznika przez operatora. To nie jest data wystawienia faktury. Liczenie startuje od północy następnego dnia.",
+          "storage": "Ile kWh możesz jeszcze pobrać bez opłaty po tym rozliczeniu, czyli stan magazynu już po przemnożeniu przez współczynnik. Jeśli rachunek podaje nadwyżkę przed współczynnikiem, przemnóż ją przez 0,8 lub 0,7.",
+          "billed_import": "Opcjonalnie. Łączna energia pobrana z sieci w całym okresie rachunku, po bilansowaniu godzinowym. Służy tylko do porównania rachunku z miernikiem.",
+          "billed_export": "Opcjonalnie. Łączna energia oddana do sieci w całym okresie rachunku, po bilansowaniu, przed współczynnikiem. Służy tylko do porównania rachunku z miernikiem.",
+          "extra_import": "Opcjonalnie. Wypełnij tylko wtedy, gdy miernik zaczął działać w Home Assistant później niż koniec okresu z rachunku. Wpisz kWh pobrane w tym brakującym czasie: wskazanie licznika operatora (rejestr 1.8.0) z dnia uruchomienia miernika minus wskazanie z rachunku.",
+          "extra_export": "Opcjonalnie. Jak wyżej, dla energii oddanej: wskazanie licznika operatora (rejestr 2.8.0) z dnia uruchomienia miernika minus wskazanie z rachunku. Bez mnożenia przez współczynnik."
         }
       },
       "settings": {
         "title": "Ustawienia",
+        "description": "Zmiana przelicza wszystkie sensory od ostatniego rachunku. Wpisane rachunki pozostają bez zmian. Szczegóły: [dokumentacja]({docs_url}).",
         "data": {
-          "import_entity": "Energia pobrana z sieci (import)",
-          "export_entity": "Energia oddana do sieci (eksport)",
+          "import_entity": "Energia pobrana z sieci",
+          "export_entity": "Energia oddana do sieci",
           "factor": "Współczynnik odzysku",
           "price": "Cena 1 kWh brutto",
-          "hourly_balancing": "Bilansowanie godzinowe",
-          "expiry_months": "Ważność energii w magazynie"
+          "expiry_months": "Ważność energii w magazynie",
+          "hourly_balancing": "Bilansowanie godzinowe"
         },
         "data_description": {
-          "factor": "0,8 dla instalacji do 10 kWp, 0,7 powyżej 10 kWp.",
-          "price": "Energia plus opłaty zmienne dystrybucji. Służy tylko do szacowania kosztu.",
-          "hourly_balancing": "W każdej godzinie liczy się saldo poboru i oddania, tak jak rozlicza operator.",
-          "expiry_months": "Liczba miesięcy od końca okresu rozliczeniowego, po której niewykorzystana energia przepada. 0 wyłącza wygasanie.",
-          "import_entity": "Licznik narastający energii pobranej z sieci (kWh lub Wh). Np. w mierniku Chint DTSU-666: „Positive active total energy”.",
-          "export_entity": "Licznik narastający energii oddanej do sieci (kWh lub Wh). Np. w mierniku Chint DTSU-666: „Negative active total energy”."
+          "import_entity": "Licznik narastający (kWh lub Wh) energii pobranej z sieci, mierzony w punkcie przyłączenia. To ten sam sensor, który w panelu Energia podaje się jako „pobór z sieci”. Przykład: w mierniku Chint DTSU-666 jest to „Positive active total energy”.",
+          "export_entity": "Licznik narastający (kWh lub Wh) energii, która faktycznie wypłynęła do sieci. Nie wybieraj produkcji paneli. Przykład: w mierniku Chint DTSU-666 jest to „Negative active total energy”.",
+          "factor": "Ile kWh możesz odebrać za każdą 1 kWh oddaną do sieci. 0,8 dla instalacji do 10 kWp, 0,7 dla większych. Wartość jest w umowie lub na rachunku.",
+          "price": "Pełny koszt 1 kWh, którą musisz kupić: energia plus opłaty zmienne dystrybucji. Najprościej podzielić kwotę za energię i dystrybucję zmienną z rachunku przez liczbę kWh. Używana tylko w sensorze „Szacowany koszt”.",
+          "expiry_months": "Po ilu miesiącach od końca okresu rozliczeniowego niewykorzystana energia przepada. Standardowo 12. Wpisz 0, żeby wyłączyć wygasanie.",
+          "hourly_balancing": "Włączone: w każdej godzinie pobór i oddanie znoszą się nawzajem i liczy się tylko różnica, tak jak rozlicza operator. Wyłącz tylko wtedy, gdy wskazane liczniki są już zbilansowane godzinowo."
         }
       },
       "remove_last": {
@@ -100,8 +110,8 @@
     },
     "error": {
       "dates": "Początek okresu nie może być później niż koniec.",
-      "same_entity": "Import i eksport muszą być różnymi encjami.",
-      "no_statistics": "Wybrana encja nie jest licznikiem narastającym (brak state_class total lub total_increasing), więc Home Assistant nie zapisuje dla niej statystyk."
+      "same_entity": "Pobór i oddanie muszą być dwiema różnymi encjami.",
+      "no_statistics": "Ta encja nie jest licznikiem narastającym (brak state_class total lub total_increasing), więc Home Assistant nie zapisuje dla niej statystyk. Wybierz sensor, który da się dodać do panelu Energia."
     },
     "abort": {
       "only_one_settlement": "Jest wpisany tylko jeden rachunek. Zamiast usuwać, wpisz nowy z tą samą datą końca okresu."

@@ -17,6 +17,8 @@ S_TO = "period_to"
 S_STORAGE = "storage"
 S_IMPORT = "billed_import"
 S_EXPORT = "billed_export"
+S_EXTRA_IMPORT = "extra_import"
+S_EXTRA_EXPORT = "extra_export"
 
 DEFAULT_FACTOR = 0.8
 DEFAULT_PRICE = 1.10

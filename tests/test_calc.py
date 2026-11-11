@@ -174,6 +174,40 @@ def test_simulate_deficit_beyond_storage() -> None:
     assert close(r.saldo, -300.0) and close(r.expired, 0.0) and r.batches == []
 
 
+def test_simulate_extra_before_meter() -> None:
+    # rozliczenie w marcu, miernik od maja: brakujący pobór 300 i oddanie 100
+    r = calc.simulate(
+        [Batch(date(2027, 3, 31), 800.0)],
+        {ts(date(2026, 6, 1)): 50.0},
+        {},
+        True,
+        0.8,
+        cut,
+        ts(date(2026, 7, 1)),
+        extra_import=300.0,
+        extra_export=100.0,
+    )
+    # 800 + 100*0.8 - 300 - 50 = 530
+    assert close(r.saldo, 530.0)
+    assert close(r.totals.import_raw, 350.0) and close(r.totals.import_balanced, 350.0)
+    assert close(r.totals.export_raw, 100.0) and close(r.totals.export_balanced, 100.0)
+
+
+def test_simulate_extra_counts_before_expiry() -> None:
+    # korekta jest liczona na starcie okresu, więc zużywa starą partię przed jej terminem
+    r = calc.simulate(
+        [Batch(date(2026, 6, 30), 300.0)],
+        {},
+        {},
+        True,
+        0.8,
+        cut,
+        ts(date(2026, 8, 1)),
+        extra_import=120.0,
+    )
+    assert close(r.expired, 180.0) and close(r.saldo, 0.0)
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_"):

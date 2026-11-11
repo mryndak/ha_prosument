@@ -28,6 +28,8 @@ from .const import (
     DEFAULT_PRICE,
     DOMAIN,
     S_EXPORT,
+    S_EXTRA_EXPORT,
+    S_EXTRA_IMPORT,
     S_FROM,
     S_IMPORT,
     S_STORAGE,
@@ -97,8 +99,14 @@ class ProsumentCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         return imp, exp
 
     def _simulate(
-        self, batches: list[Batch], series: Series, end: datetime
+        self,
+        batches: list[Batch],
+        series: Series,
+        end: datetime,
+        settlement: dict[str, Any] | None,
     ) -> SimResult:
+        """settlement: rachunek otwierający okres (źródło korekty początkowej)."""
+        settlement = settlement or {}
         conf = self.conf
         return simulate(
             batches,
@@ -108,6 +116,8 @@ class ProsumentCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             conf.get(CONF_FACTOR, DEFAULT_FACTOR),
             _cut_ts,
             end.timestamp(),
+            settlement.get(S_EXTRA_IMPORT) or 0.0,
+            settlement.get(S_EXTRA_EXPORT) or 0.0,
         )
 
     async def _async_update_data(self) -> dict[str, Any]:
@@ -127,6 +137,7 @@ class ProsumentCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             derive_batches(pairs, months),
             await self._series(start, None),
             dt_util.utcnow(),
+            last,
         )
         cur = res.totals
         to_pay = max(-res.saldo, 0.0)
@@ -148,6 +159,8 @@ class ProsumentCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "hours": cur.hours,
             "period_start": (last_to + timedelta(days=1)).isoformat(),
             "start_storage": last[S_STORAGE],
+            "extra_import": last.get(S_EXTRA_IMPORT) or 0.0,
+            "extra_export": last.get(S_EXTRA_EXPORT) or 0.0,
             "factor": factor,
             "price": price,
             "expiry_months": months,
@@ -171,6 +184,7 @@ class ProsumentCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 derive_batches(pairs[:-1], months),
                 await self._series(_day_start(check_from), check_end),
                 check_end,
+                prev,
             )
             chk = sim.totals
             check: dict[str, Any] = {

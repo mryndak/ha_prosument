@@ -127,6 +127,8 @@ def simulate(
     factor: float,
     cut_ts: Callable[[date], float],
     end_ts: float,
+    extra_import: float = 0.0,
+    extra_export: float = 0.0,
 ) -> SimResult:
     """Policz magazyn za okres z uwzględnieniem wygasania partii.
 
@@ -135,12 +137,16 @@ def simulate(
 
     Do terminu ważności partia pokrywa narastający niedobór okresu
     (pobór ponad oddanie × współczynnik); niewykorzystana reszta przepada.
+   
+    extra_import / extra_export: kWh z początku okresu, których nie ma
+    w statystykach (np. zanim zamontowano miernik). Liczone na starcie okresu.
     """
     pool = _sorted(batches)
     cuts = sorted(
         {cut_ts(b.expiry) for b in pool if b.expiry is not None and cut_ts(b.expiry) <= end_ts}
     )
-    cum = 0.0  # saldo bieżącego okresu bez starych partii
+    # saldo bieżącego okresu bez starych partii
+    cum = extra_export * factor - extra_import
     expired = 0.0
     prev = -math.inf
     for cut in [*cuts, math.inf]:
@@ -167,8 +173,13 @@ def simulate(
     elif cum > 0:
         # nadwyżka bieżącego okresu: jeszcze bez terminu, do czasu rachunku
         view.append(Batch(None, cum))
+    totals = balance(imp, exp, hourly)
+    totals.import_raw += extra_import
+    totals.import_balanced += extra_import
+    totals.export_raw += extra_export
+    totals.export_balanced += extra_export
     return SimResult(
-        totals=balance(imp, exp, hourly),
+        totals=totals,
         saldo=saldo,
         expired=expired,
         batches=[b for b in view if b.amount > 1e-9],
