@@ -54,9 +54,10 @@
     "step": {
       "init": {
         "title": "Prosumer",
-        "description": "**Enter a new bill**: after each settlement, e.g. every six months.\n\n**Settings**: counters, factor, price, energy validity.\n\n**Remove the last bill**: undoes the last entry.",
+        "description": "**Enter a new bill**: after each settlement, e.g. every six months.\n\n**Edit the last bill**: change the period end date or figures of the last entry.\n\n**Settings**: counters, factor, price, energy validity.\n\n**Remove the last bill**: undoes the last entry.",
         "menu_options": {
           "add_settlement": "Enter a new bill",
+          "edit_last": "Edit the last bill",
           "settings": "Settings",
           "remove_last": "Remove the last bill"
         }
@@ -64,6 +65,28 @@
       "add_settlement": {
         "title": "New bill",
         "description": "Copy the figures from the new settlement. After saving, counting starts the day after this period ends and the bill difference sensors compare the bill with the meter.\n\n**Only two fields are required:** period end and energy left in storage.\n\nA bill with the same period end replaces the earlier one, which is how you fix a mistake. Field help: [documentation]({docs_url}).",
+        "data": {
+          "period_from": "Settlement period start",
+          "period_to": "Settlement period end",
+          "storage": "Energy left in storage",
+          "billed_import": "Imported energy per bill",
+          "billed_export": "Exported energy per bill",
+          "extra_import": "Import before the meter was running",
+          "extra_export": "Export before the meter was running"
+        },
+        "data_description": {
+          "period_from": "Optional. First day of the billed period. Needed only for the bill difference sensors.",
+          "period_to": "Last day of the billed period, i.e. the day the operator read the meter. Not the invoice date. Counting starts at midnight the next day.",
+          "storage": "kWh you can still take for free after this settlement, already multiplied by the factor. If the bill shows the surplus before the factor, multiply it by 0.8 or 0.7.",
+          "billed_import": "Optional. Total energy imported in the billed period, after hourly balancing. Used only to compare the bill with the meter.",
+          "billed_export": "Optional. Total energy exported in the billed period, after balancing, before the factor. Used only to compare the bill with the meter.",
+          "extra_import": "Optional. Fill in only if your meter started recording in Home Assistant later than the period end. Enter the kWh imported in that gap: utility meter reading (register 1.8.0) on the day your meter started minus the reading on the bill.",
+          "extra_export": "Optional. Same for exported energy: utility meter reading (register 2.8.0) on the day your meter started minus the reading on the bill. Do not apply the factor."
+        }
+      },
+      "edit_last": {
+        "title": "Edit the last bill",
+        "description": "Change the period end date or figures of the last bill. After saving, everything is recalculated from the day after the new period end until now, as long as Home Assistant has meter data for that time. Field help: [documentation]({docs_url}).",
         "data": {
           "period_from": "Settlement period start",
           "period_to": "Settlement period end",

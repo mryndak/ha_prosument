@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from datetime import date
 from typing import Any
 
 import voluptuous as vol
@@ -113,7 +112,8 @@ def _settlement_schema() -> vol.Schema:
     return vol.Schema(
         {
             vol.Optional(S_FROM): DateSelector(),
-            vol.Required(S_TO, default=date.today().isoformat()): DateSelector(),
+            # Bez wartości domyślnej: datę trzeba przepisać z rachunku.
+            vol.Required(S_TO): DateSelector(),
             vol.Required(S_STORAGE, default=0): _KWH,
             vol.Optional(S_IMPORT): _KWH,
             vol.Optional(S_EXPORT): _KWH,
@@ -203,14 +203,14 @@ class ProsumentConfigFlow(ConfigFlow, domain=DOMAIN):
 
 
 class ProsumentOptionsFlow(OptionsFlow):
-    """Nowy rachunek, zmiana ustawień, cofnięcie ostatniego rachunku."""
+    """Nowy rachunek, poprawa ostatniego, ustawienia, cofnięcie rachunku."""
 
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
         return self.async_show_menu(
             step_id="init",
-            menu_options=["add_settlement", "settings", "remove_last"],
+            menu_options=["add_settlement", "edit_last", "settings", "remove_last"],
             description_placeholders=_DOCS,
         )
 
@@ -229,6 +229,32 @@ class ProsumentOptionsFlow(OptionsFlow):
         return self.async_show_form(
             step_id="add_settlement",
             data_schema=_settlement_schema(),
+            errors=errors,
+            description_placeholders=_DOCS,
+        )
+
+    async def async_step_edit_last(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Popraw ostatni rachunek, łącznie z datą końca okresu."""
+        settlements = sorted(
+            self.config_entry.options.get(CONF_SETTLEMENTS, []),
+            key=lambda s: s[S_TO],
+        )
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            errors = _settlement_errors(user_input)
+            if not errors:
+                options = dict(self.config_entry.options)
+                options[CONF_SETTLEMENTS] = _merge_settlement(
+                    settlements[:-1], user_input
+                )
+                return self.async_create_entry(data=options)
+        return self.async_show_form(
+            step_id="edit_last",
+            data_schema=self.add_suggested_values_to_schema(
+                _settlement_schema(), user_input or settlements[-1]
+            ),
             errors=errors,
             description_placeholders=_DOCS,
         )

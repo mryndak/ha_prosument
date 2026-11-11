@@ -147,10 +147,11 @@ niekorzyść (o część energii, która w tych miesiącach zbilansowała się w
 | Opcja | Co robi |
 |---|---|
 | Wpisz nowy rachunek | Dodaje rozliczenie. Od tej chwili liczenie startuje od nowego końca okresu. |
+| Popraw ostatni rachunek | Zmiana daty końca okresu lub liczb w ostatnim wpisie. Wszystko przelicza się od nowej daty. |
 | Ustawienia | Zmiana encji, współczynnika, ceny, ważności energii i bilansowania. |
 | Usuń ostatni rachunek | Cofa ostatni wpis; obliczenia wracają do poprzedniego rachunku. |
 
-Pomyłka w rachunku? Wpisz go jeszcze raz z tą samą datą końca okresu, a zastąpi poprzedni wpis.
+Pomyłka w rachunku, na przykład zła data końca okresu? Użyj opcji „Popraw ostatni rachunek”.
 Integracja pamięta 12 ostatnich rachunków.
 
 ## Sensory

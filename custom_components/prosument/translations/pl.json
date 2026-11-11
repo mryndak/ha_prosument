@@ -54,9 +54,10 @@
     "step": {
       "init": {
         "title": "Prosument",
-        "description": "**Wpisz nowy rachunek**: po każdym rozliczeniu, np. co pół roku.\n\n**Ustawienia**: liczniki, współczynnik, cena, ważność energii.\n\n**Usuń ostatni rachunek**: cofa ostatni wpis.",
+        "description": "**Wpisz nowy rachunek**: po każdym rozliczeniu, np. co pół roku.\n\n**Popraw ostatni rachunek**: zmiana daty końca okresu lub liczb w ostatnim wpisie.\n\n**Ustawienia**: liczniki, współczynnik, cena, ważność energii.\n\n**Usuń ostatni rachunek**: cofa ostatni wpis.",
         "menu_options": {
           "add_settlement": "Wpisz nowy rachunek",
+          "edit_last": "Popraw ostatni rachunek",
           "settings": "Ustawienia",
           "remove_last": "Usuń ostatni rachunek"
         }
@@ -64,6 +65,28 @@
       "add_settlement": {
         "title": "Nowy rachunek",
         "description": "Przepisz liczby z nowego rozliczenia. Po zapisaniu integracja zacznie liczyć od dnia po końcu tego okresu, a sensory „Rachunek – różnica…” porównają rachunek z miernikiem.\n\n**Wymagane są tylko dwa pola:** koniec okresu i energia pozostała w magazynie.\n\nRachunek z tą samą datą końca okresu zastąpi wpisany wcześniej, więc tak poprawisz pomyłkę. Objaśnienia pól: [dokumentacja]({docs_url}).",
+        "data": {
+          "period_from": "Początek okresu rozliczeniowego",
+          "period_to": "Koniec okresu rozliczeniowego",
+          "storage": "Energia pozostała w magazynie",
+          "billed_import": "Energia pobrana wg rachunku",
+          "billed_export": "Energia oddana wg rachunku",
+          "extra_import": "Pobór przed uruchomieniem miernika",
+          "extra_export": "Oddanie przed uruchomieniem miernika"
+        },
+        "data_description": {
+          "period_from": "Opcjonalnie. Pierwszy dzień okresu, za który wystawiono rachunek. Potrzebny tylko do sensorów „Rachunek – różnica…”.",
+          "period_to": "Ostatni dzień okresu z rachunku, czyli dzień odczytu licznika przez operatora. To nie jest data wystawienia faktury. Liczenie startuje od północy następnego dnia.",
+          "storage": "Ile kWh możesz jeszcze pobrać bez opłaty po tym rozliczeniu, czyli stan magazynu już po przemnożeniu przez współczynnik. Jeśli rachunek podaje nadwyżkę przed współczynnikiem, przemnóż ją przez 0,8 lub 0,7.",
+          "billed_import": "Opcjonalnie. Łączna energia pobrana z sieci w całym okresie rachunku, po bilansowaniu godzinowym. Służy tylko do porównania rachunku z miernikiem.",
+          "billed_export": "Opcjonalnie. Łączna energia oddana do sieci w całym okresie rachunku, po bilansowaniu, przed współczynnikiem. Służy tylko do porównania rachunku z miernikiem.",
+          "extra_import": "Opcjonalnie. Wypełnij tylko wtedy, gdy miernik zaczął działać w Home Assistant później niż koniec okresu z rachunku. Wpisz kWh pobrane w tym brakującym czasie: wskazanie licznika operatora (rejestr 1.8.0) z dnia uruchomienia miernika minus wskazanie z rachunku.",
+          "extra_export": "Opcjonalnie. Jak wyżej, dla energii oddanej: wskazanie licznika operatora (rejestr 2.8.0) z dnia uruchomienia miernika minus wskazanie z rachunku. Bez mnożenia przez współczynnik."
+        }
+      },
+      "edit_last": {
+        "title": "Popraw ostatni rachunek",
+        "description": "Zmień datę końca okresu lub liczby w ostatnim rachunku. Po zapisaniu integracja przeliczy wszystko od dnia po nowej dacie końca okresu do teraz, o ile Home Assistant ma dane miernika z tego czasu. Objaśnienia pól: [dokumentacja]({docs_url}).",
         "data": {
           "period_from": "Początek okresu rozliczeniowego",
           "period_to": "Koniec okresu rozliczeniowego",
